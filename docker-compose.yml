@@ -1,0 +1,14 @@
+services:
+  code-server:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - PASSWORD=${PASSWORD:-}
+      - HASHED_PASSWORD=${HASHED_PASSWORD:-}
+    volumes:
+      - code-server-data:/home/coder/data
+    restart: unless-stopped
+
+volumes:
+  code-server-data:
