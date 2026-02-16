@@ -6,9 +6,11 @@ DATA_DIR="${DATA_DIR:-/home/coder/data}"
 CS_CONFIG_DIR="${DATA_DIR}/.config/code-server"
 CS_CONFIG="${CS_CONFIG_DIR}/config.yaml"
 
-# Ensure persistent data directory exists
+# Ensure persistent data directory exists and is owned by coder (UID 1000).
+# Railway volumes are created as root, so fix ownership on first run.
 mkdir -p "${DATA_DIR}"
 mkdir -p "${CS_CONFIG_DIR}"
+chown -R 1000:1000 "${DATA_DIR}"
 
 # --- Password setup ---
 # Priority:
@@ -54,10 +56,10 @@ fi
 # Point code-server config at our persistent location
 export XDG_CONFIG_HOME="${DATA_DIR}/.config"
 
-# Use persistent data dir for user-data and extensions
-exec dumb-init /usr/bin/code-server \
-  --config "${CS_CONFIG}" \
-  --user-data-dir "${DATA_DIR}/user-data" \
-  --extensions-dir "${DATA_DIR}/extensions" \
-  --bind-addr "0.0.0.0:${PORT}" \
-  "${DATA_DIR}/workspace"
+# Drop to coder (UID 1000) and launch code-server
+exec su coder -c "exec dumb-init /usr/bin/code-server \
+  --config '${CS_CONFIG}' \
+  --user-data-dir '${DATA_DIR}/user-data' \
+  --extensions-dir '${DATA_DIR}/extensions' \
+  --bind-addr '0.0.0.0:${PORT}' \
+  '${DATA_DIR}/workspace'"
